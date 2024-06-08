@@ -43,33 +43,18 @@ public :
 		return y;
 	}
 
-	F df(int n) {
-		if (n > maxdegree) {
-			// 미분 횟수가 다항식의 차수보다 클 경우, 모든 계수가 0인 함수 반환
+	F df() const {
+		if (maxdegree == 0) {
 			double* zero_coefficients = new double[1] {0};
 			return F(0, zero_coefficients);
 		}
 
-		int new_degree = maxdegree - n;
+		int new_degree = maxdegree - 1;
 		double* new_coefficients = new double[new_degree + 1];
 
-		// 원본 다항식을 복사한 임시 배열
-		double* temp = new double[maxdegree + 1];
-		for (int i = 0; i <= maxdegree; ++i) {
-			temp[i] = f[i];
+		for (int i = 1; i <= maxdegree; ++i) {
+			new_coefficients[i - 1] = i * f[i];
 		}
-
-		for (int k = 0; k < n; ++k) {
-			for (int i = 0; i <= maxdegree - k - 1; ++i) {
-				temp[i] = (i + 1) * temp[i + 1];
-			}
-		}
-
-		for (int i = 0; i <= new_degree; ++i) {
-			new_coefficients[i] = temp[i];
-		}
-
-		delete[] temp;
 
 		return F(new_degree, new_coefficients);
 	}
@@ -77,13 +62,11 @@ public :
 
 double newtonsMethod(F& f, double initialGuess) {
 	double x = initialGuess;
+	F df1 = f.df();
+	F df2 = df1.df();
 	for (int i = 0; i < 100; ++i) {
-		double fx = f.y(x);
-		F df1 = f.df(1);
-		/*std::cout << "df1 :" << std::endl;
-		df1.printF();*/
-
-		double dfx = df1.y(x);
+		double fx = df1.y(x);
+		double dfx = df2.y(x);
 		if (fabs(dfx) < 1e-12) break; // 0으로 나누기 방지
 		double x_next = x - fx / dfx;
 		if (fabs(x_next - x) < 1e-12) break; // 수렴 조건
@@ -96,8 +79,7 @@ int main() {
 	F f;
 	f.setF();
 	f.printF();
-	F df = f.df(1);
-	double root = newtonsMethod(df, 0);
+	double root = newtonsMethod(f, 0);
 	std::cout << "Root :" << root << std::endl;
 	return 0;
 }
